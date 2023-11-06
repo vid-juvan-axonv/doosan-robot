@@ -796,16 +796,21 @@ namespace dsr_control{
         registerInterface(&jnt_state_interface);
         registerInterface(&jnt_pos_interface);
 
-        /*ros::V_string joint_names = boost::assign::list_of("front_left_wheel")("front_right_wheel")("rear_left_wheel")("rear_right_wheel");
+        ros::V_string joint_names = boost::assign::list_of("joint1")("joint2")("joint3")("joint4")("joint5")("joint6");
         for (unsigned int i = 0; i < joint_names.size(); i++){
-            hardware_interface::JointStateHandle joint_state_handle(joint_names[i], &joints[i].pos, &joints[i].vel, &joints[i].eff);
+            hardware_interface::JointStateHandle joint_state_handle(
+                joint_names[i],
+                &joints[i].pos,
+                &joints[i].vel,
+                &joints[i].eff);
             jnt_state_interface.registerHandle(joint_state_handle);
 
-            hardware_interface::JointHandle joint_handle(joint_state_handle, &joints[i].cmd);
+            hardware_interface::JointHandle joint_handle(
+                joint_state_handle,
+                &joints[i].cmd);
             velocity_joint_interface_.registerHandle(joint_handle);
         }
         registerInterface(&velocity_joint_interface_);
-        */
 
         // Publisher msg
         m_PubRobotState = private_nh_.advertise<dsr_msgs::RobotState>("state",100);
@@ -993,7 +998,7 @@ namespace dsr_control{
         m_nh_realtime_service[12] = private_nh_.advertiseService("realtime/set_velx_rt", &DRHWInterface::set_velx_rt_cb, this);
         m_nh_realtime_service[13] = private_nh_.advertiseService("realtime/set_accx_rt", &DRHWInterface::set_accx_rt_cb, this);
         m_nh_realtime_service[14] = private_nh_.advertiseService("realtime/read_data_rt", &DRHWInterface::read_data_rt_cb, this);
-        m_nh_realtime_service[14] = private_nh_.advertiseService("realtime/write_data_rt", &DRHWInterface::write_data_rt_cb, this);
+        m_nh_realtime_service[15] = private_nh_.advertiseService("realtime/write_data_rt", &DRHWInterface::write_data_rt_cb, this);
 
         memset(&g_stDrState, 0x00, sizeof(DR_STATE));
         memset(&g_stDrError, 0x00, sizeof(DR_ERROR));
@@ -1240,6 +1245,15 @@ namespace dsr_control{
         std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
         float time = msg->time;
 
+        /*ROS_INFO_STREAM("speedj " << boost::posix_time::microsec_clock::local_time().time_of_day().total_milliseconds() << 
+            " TIME: " << time <<
+            " VEL: " << 
+            target_vel.data()[0] << " | " << target_vel.data()[1] << " | " << target_vel.data()[2] << " | " << 
+            target_vel.data()[3] << " | " << target_vel.data()[4] << " | " << target_vel.data()[5] << 
+            " ACC: " << 
+            target_acc.data()[0] << " | " << target_acc.data()[1] << " | " << target_acc.data()[2] << " | " << 
+            target_acc.data()[3] << " | " << target_acc.data()[4] << " | " << target_acc.data()[5]);*/
+
         Drfl.speedj(target_vel.data(), target_acc.data(), time);
     }
 
@@ -1287,6 +1301,15 @@ namespace dsr_control{
         std::array<float, NUM_JOINT> target_acc;
         std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
         float time = msg->time;
+
+        /*ROS_INFO_STREAM("speedj_rt " << boost::posix_time::microsec_clock::local_time().time_of_day().total_milliseconds() << 
+            " TIME: " << time <<
+            " VEL: " << 
+            target_vel.data()[0] << " | " << target_vel.data()[1] << " | " << target_vel.data()[2] << " | " << 
+            target_vel.data()[3] << " | " << target_vel.data()[4] << " | " << target_vel.data()[5] << 
+            " ACC: " << 
+            target_acc.data()[0] << " | " << target_acc.data()[1] << " | " << target_acc.data()[2] << " | " << 
+            target_acc.data()[3] << " | " << target_acc.data()[4] << " | " << target_acc.data()[5]);*/
 
         Drfl.speedj_rt(target_vel.data(), target_acc.data(), time);
     }
