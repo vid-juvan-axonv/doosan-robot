@@ -532,6 +532,7 @@ namespace dsr_control{
         virtual ~DRHWInterface();
 
         bool init();
+        bool initOld();
         virtual void read(ros::Duration& elapsed_time);
         virtual void write(ros::Duration& elapsed_time);
         int MsgPublisher_RobotState();

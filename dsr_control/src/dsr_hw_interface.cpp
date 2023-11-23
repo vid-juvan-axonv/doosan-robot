@@ -11,6 +11,7 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/bind.hpp>
 #include <sstream>
+#include <thread>
 
 CDRFLEx Drfl;
 Serial_comm ser_comm;
@@ -1027,6 +1028,89 @@ namespace dsr_control{
     }
 
     bool DRHWInterface::init()
+    {
+        //--- doosan API's call-back fuctions : Only work within 50msec in call-back functions
+        // Drfl.set_on_tp_initializing_completed(OnTpInitializingCompletedCB);
+        Drfl.set_on_homming_completed(OnHommingCompletedCB);
+        Drfl.set_on_program_stopped(OnProgramStoppedCB);
+        Drfl.set_on_monitoring_modbus(OnMonitoringModbusCB);
+        Drfl.set_on_monitoring_data(OnMonitoringDataCB);           // Callback function in M2.4 and earlier
+        Drfl.set_on_monitoring_ctrl_io(OnMonitoringCtrlIOCB);       // Callback function in M2.4 and earlier
+        // Drfl.set_on_monitoring_state(OnMonitoringStateCB);       // Callback not properly written!!
+        // Drfl.set_on_monitoring_access_control(OnMonitoringAccessControlCB);
+        Drfl.set_on_log_alarm(OnLogAlarm);
+        Drfl.set_on_tp_popup(OnTpPopupCB);
+        Drfl.set_on_tp_log(OnTpLogCB);
+        Drfl.set_on_tp_get_user_input(OnTpGetUserInputCB);
+        //Drfl.set_on_tp_progress(OnTpProgressCB);
+
+        cout<< "DOOSAN ROBOT: OPPENING CONNECTION" << endl;
+        if(!Drfl.open_connection("192.168.64.20", 12345)) {
+            cout << "DOOSAN ROBOT: FAILED TO OPEN CONNECTION" << endl;
+            return false;
+        }
+
+        cout << "DOOSAN ROBOT: ACCESSING CONTROL" << endl;
+        g_bHasControlAuthority = Drfl.manage_access_control(MANAGE_ACCESS_CONTROL_FORCE_REQUEST);
+        if(!g_bHasControlAuthority) {
+            cout << "DOOSAN ROBOT: FAILED TO ACCESS CONTROL" << endl;
+            return false;
+        }
+
+        this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+        cout << "DOOSAN ROBOT: SERVO CONTROL ON" << endl;
+        if(!Drfl.set_robot_control(CONTROL_SERVO_ON)) {
+            cout << "DOOSAN ROBOT: FAILED TO SERVO CONTROL ON" << endl;;
+            return false;
+        }
+
+        cout << "DOOSAN ROBOT: WHILE" << endl;
+        while ((Drfl.get_robot_state() != STATE_STANDBY) || !g_bHasControlAuthority){
+            cout << "ROBOT STATE: " << Drfl.get_robot_state() << ", authority: " << g_bHasControlAuthority << endl;
+            this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+
+        cout << "DOOSAN ROBOT: SET MODE" << endl;
+        if(!Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS)) {
+            cout << "DOOSAN ROBOT: FAILED TO SET MODE" << endl;
+            return false;
+        }
+
+        cout << "DOOSAN ROBOT: SET SAFETY MODE" << endl;
+        if(!Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_MOVE)) {
+            cout << "DOOSAN ROBOT: FAILED TO SET SAFETY MODE" << endl;
+            return false;
+        }
+
+        cout << "DOOSAN ROBOT: SET ROBOT SYSTEM" << endl;
+        if(!Drfl.set_robot_system(ROBOT_SYSTEM_REAL)) {
+            cout << "DOOSAN ROBOT: FAILED TO SET ROBOT SYSTEM" << endl;
+            return false;
+        }
+
+        cout<< "DOOSAN ROBOT: OPENING RT CONNECTION" << endl;
+        if(!Drfl.connect_rt_control("192.168.64.20", 12347)) {
+            cout << "DOOSAN ROBOT: FAILED TO OPEN CONNECTION" << endl;
+            return false;
+        }
+
+        cout<< "DOOSAN ROBOT: SETTIN RT CONTROL OUTOUT" << endl;
+        if(!Drfl.set_rt_control_output("v1.0", 0.1, -1)) {
+            cout << "DOOSAN ROBOT: FAILED TO SET RT CONTROL OUTPUT" << endl;
+            return false;
+        }
+
+        cout << "DOOSAN ROBOT: START RT CONTROL" << endl;
+        if(!Drfl.start_rt_control()) {
+            cout << "DOOSAN ROBOT: FAILED TO START RT CONTROL" << endl;
+            return false;
+        }
+
+        return true;
+    }
+
+    bool DRHWInterface::initOld()
     {
         ROS_INFO("[dsr_hw_interface] init() ==> setup callback fucntion");
         int nServerPort = 12345;
