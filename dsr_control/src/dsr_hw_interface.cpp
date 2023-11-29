@@ -1071,7 +1071,7 @@ namespace dsr_control{
             this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
 
-        cout << "DOOSAN ROBOT: SET MODE" << endl;
+        /*cout << "DOOSAN ROBOT: SET MODE" << endl;
         if(!Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS)) {
             cout << "DOOSAN ROBOT: FAILED TO SET MODE" << endl;
             return false;
@@ -1081,7 +1081,7 @@ namespace dsr_control{
         if(!Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_MOVE)) {
             cout << "DOOSAN ROBOT: FAILED TO SET SAFETY MODE" << endl;
             return false;
-        }
+        }*/
 
         cout << "DOOSAN ROBOT: SET ROBOT SYSTEM" << endl;
         if(!Drfl.set_robot_system(ROBOT_SYSTEM_REAL)) {
